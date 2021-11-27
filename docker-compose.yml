@@ -1,0 +1,36 @@
+version: "3"
+services:
+
+  web:
+    image: nginx:1.21.4-alpine
+    volumes:
+      - ./web/etc/nginx/conf.d:/etc/nginx/conf.d
+      - ./public:/var/www/app/public
+    links:
+      - app
+    ports:
+      - 80:80
+  app:
+    build: .
+    command: bin/rails server -b 0.0.0.0 -p 3000
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgres://app:password@db/app_development
+    volumes:
+      - .:/app
+    links:
+      - db
+      - redis
+    ports:
+      - 3000:3000
+
+  db:
+    image: postgres:13.1-alpine
+    environment:
+      - POSTGRES_USER=app
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - /var/lib/postgresql/data
+
+  redis:
+    image: redis:alpine
